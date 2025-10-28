@@ -1,0 +1,471 @@
+/* 
+ * KORPUS Training Club - Custom Styles
+ * Paleta de colores basada en la imagen proporcionada:
+ * - ACERO: #9CAFB7 (RGB 156, 175, 183)
+ * - POTENCY: #121212 (RGB 18, 18, 18) 
+ * - WHITE: #FFFFFF (RGB 255, 255, 255)
+ */
+
+:root {
+    --korpus-acero: #9CAFB7;
+    --korpus-potency: #121212;
+    --korpus-white: #FFFFFF;
+    --korpus-acero-light: rgba(156, 175, 183, 0.1);
+    --korpus-acero-dark: rgba(156, 175, 183, 0.8);
+    --korpus-shadow: rgba(18, 18, 18, 0.15);
+    --korpus-gradient: linear-gradient(135deg, var(--korpus-acero) 0%, var(--korpus-potency) 100%);
+}
+
+/* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Fallback en caso de que no cargue la imagen */
+    background-color: #9CAFB7;
+    background: var(--korpus-gradient);
+    /* Imagen de fondo principal */
+    background-image: url('../assets/fondo.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--korpus-potency);
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Overlay para mejorar legibilidad */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--korpus-gradient);
+    opacity: 0.4;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Card principal */
+.registration-card {
+    background: var(--korpus-white);
+    border-radius: 20px;
+    overflow: hidden;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.card-header {
+    background: var(--korpus-gradient);
+    color: var(--korpus-white);
+    border: none;
+    padding: 2rem 1rem;
+}
+
+/* Logo */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-image {
+    max-height: 150px;
+    max-width: 400px;
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+    transform: scale(1.05);
+}
+
+.form-title {
+    color: var(--korpus-potency);
+    font-weight: 600;
+    font-size: 1.8rem;
+}
+
+/* Secciones del formulario */
+.form-section {
+    border-left: 4px solid var(--korpus-acero);
+    padding-left: 1rem;
+    margin-left: 0.5rem;
+}
+
+.section-title {
+    color: var(--korpus-potency);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.section-title i {
+    color: var(--korpus-acero);
+}
+
+/* Campos de entrada personalizados */
+.form-label {
+    font-weight: 600;
+    color: var(--korpus-potency);
+    margin-bottom: 0.5rem;
+}
+
+.custom-input {
+    border: 2px solid var(--korpus-acero-light);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: var(--korpus-white);
+}
+
+.custom-input:focus {
+    border-color: var(--korpus-acero);
+    box-shadow: 0 0 0 0.2rem var(--korpus-acero-light);
+    background-color: var(--korpus-white);
+}
+
+.custom-input:valid {
+    border-color: #28a745;
+}
+
+.custom-input:invalid:not(:placeholder-shown) {
+    border-color: #dc3545;
+}
+
+.custom-input-addon {
+    background-color: var(--korpus-acero);
+    color: var(--korpus-white);
+    border: 2px solid var(--korpus-acero);
+    font-weight: 600;
+}
+
+/* Botones personalizados */
+.custom-btn-primary {
+    background: var(--korpus-gradient);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--korpus-shadow);
+}
+
+.custom-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--korpus-shadow);
+    background: linear-gradient(135deg, var(--korpus-potency) 0%, var(--korpus-acero) 100%);
+}
+
+.custom-btn-secondary {
+    border: 2px solid var(--korpus-acero);
+    color: var(--korpus-acero);
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.custom-btn-secondary:hover {
+    background-color: var(--korpus-acero);
+    color: var(--korpus-white);
+    transform: translateY(-1px);
+}
+
+/* Checkbox personalizado */
+.form-check-input:checked {
+    background-color: var(--korpus-acero);
+    border-color: var(--korpus-acero);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem var(--korpus-acero-light);
+}
+
+.form-check-input[type="radio"]:checked {
+    background-color: var(--korpus-acero);
+    border-color: var(--korpus-acero);
+}
+
+.form-check-input[type="radio"]:focus {
+    box-shadow: 0 0 0 0.2rem var(--korpus-acero-light);
+}
+
+/* Estilos para radio buttons */
+.form-check {
+    padding-left: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.form-check-input {
+    margin-left: -2rem;
+    margin-top: 0.25rem;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: var(--korpus-potency);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.form-check-label:hover {
+    color: var(--korpus-acero);
+}
+
+/* Caja de consentimiento */
+.consent-box {
+    background-color: var(--korpus-acero-light);
+    border: 1px solid var(--korpus-acero);
+    border-radius: 10px;
+    position: relative;
+}
+
+.consent-box::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--korpus-acero);
+    border-radius: 10px 0 0 10px;
+}
+
+/* Campos condicionales */
+.conditional-field {
+    margin-left: 2rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--korpus-acero-light);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+}
+
+/* Animaciones para campos que aparecen */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        max-height: 100px;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.fade-in {
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Secciones con errores */
+.section-error {
+    border-left-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.05);
+    border-radius: 5px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.section-error .section-title {
+    color: #dc3545 !important;
+}
+
+.section-error .section-title i {
+    color: #dc3545 !important;
+}
+
+/* Enlaces */
+.link-primary {
+    color: var(--korpus-acero);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.link-primary:hover {
+    color: var(--korpus-potency);
+    text-decoration: underline;
+}
+
+/* Mensajes de validación */
+.invalid-feedback {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.valid-feedback {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* Texto pequeño */
+.form-text {
+    color: var(--korpus-acero);
+    font-size: 0.875rem;
+}
+
+/* Campos requeridos */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Animaciones de entrada - Deshabilitadas para evitar scroll inicial */
+.registration-card {
+    /* animation: slideInUp 0.6s ease-out; */
+    opacity: 1;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal personalizado */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+}
+
+.modal-header.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+/* Efectos hover para inputs */
+.custom-input:hover:not(:focus) {
+    border-color: var(--korpus-acero-dark);
+    background-color: var(--korpus-acero-light);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .logo-image {
+        max-height: 120px;
+        max-width: 320px;
+    }
+    
+    .form-title {
+        font-size: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+    }
+    
+    .card-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .card-body {
+        padding: 2rem 1.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .logo-image {
+        max-height: 100px;
+        max-width: 280px;
+    }
+    
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .form-title {
+        font-size: 1.3rem;
+    }
+    
+    .custom-btn-primary,
+    .custom-btn-secondary {
+        padding: 0.65rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* Ajustes para fondo en móviles */
+    body {
+        background-attachment: scroll;
+    }
+
+    body::before {
+        opacity: 0.9;
+    }
+
+    .registration-card {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Estados de carga */
+.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.loading .custom-btn-primary {
+    background: var(--korpus-acero);
+}
+
+/* Efectos adicionales */
+.form-section {
+    position: relative;
+}
+
+.form-section::before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--korpus-acero);
+    border-radius: 2px;
+}
+
+/* Mejoras de accesibilidad */
+.custom-input:focus,
+.custom-btn-primary:focus,
+.custom-btn-secondary:focus {
+    outline: 2px solid var(--korpus-acero);
+    outline-offset: 2px;
+}
+
+/* Animación de éxito */
+.success-animation {
+    animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "korpus-training-club-form",
+  "version": "1.0.0",
+  "description": "Formulario de registro para KORPUS Training Club",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx live-server .",
+    "build": "echo 'Proyecto listo para producción'",
+    "validate": "echo 'Validando formulario...'"
+  },
+  "keywords": [
+    "gym",
+    "registration",
+    "form",
+    "bootstrap",
+    "javascript",
+    "korpus"
+  ],
+  "author": "KORPUS Training Club",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "serve": "^14.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/korpus/training-club-form.git"
+  },
+  "config": {
+    "colors": {
+      "acero": "#9CAFB7",
+      "potency": "#121212",
+      "white": "#FFFFFF"
+    },
+    "validation": {
+      "minAge": 16,
+      "maxAge": 80,
+      "documentLength": {
+        "min": 6,
+        "max": 12
+      }
+    }
+  }
+}
