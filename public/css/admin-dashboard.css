@@ -137,13 +137,6 @@ body::before {
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
 }
 
-.modal-content {
-    border-radius: var(--korpus-border-radius-lg);
-    border: none;
-    overflow: hidden;
-    box-shadow: var(--korpus-shadow-lg);
-}
-
 /* Filas de detalles */
 .detail-row {
     padding: 0.8rem 0;
