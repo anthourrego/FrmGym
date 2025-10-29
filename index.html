@@ -61,17 +61,16 @@
                                 <!-- Número de Documento -->
                                 <div class="mb-3">
                                     <label for="documentNumber" class="form-label">
-                                        Número de Documento <span class="text-danger">*</span>
+                                        Número de Documento
                                     </label>
                                     <input type="text" 
                                            class="form-control custom-input" 
                                            id="documentNumber" 
                                            name="documentNumber" 
-                                           required
                                            placeholder="Ej: 1234567890"
                                            pattern="[0-9]{6,12}">
                                     <div class="invalid-feedback">
-                                        Por favor, ingresa un número de documento válido (6-12 dígitos).
+                                        Si decides ingresarlo, debe ser un número de documento válido (6-12 dígitos).
                                     </div>
                                 </div>
                                 
@@ -364,32 +363,11 @@
                                 </div>
                             </div>
                             
-                            <!-- Términos y Condiciones -->
-                            <div class="mb-4">
-                                <div class="form-check">
-                                    <input class="form-check-input" 
-                                           type="checkbox" 
-                                           id="terms" 
-                                           name="terms" 
-                                           required>
-                                    <label class="form-check-label" for="terms">
-                                        Acepto los <a href="#" class="link-primary">términos y condiciones</a> de KORPUS Training Club <span class="text-danger">*</span>
-                                    </label>
-                                    <div class="invalid-feedback">
-                                        Debes aceptar los términos y condiciones.
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- Botones -->
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg custom-btn-primary">
                                     <i class="fas fa-user-plus me-2"></i>
                                     Registrarme
-                                </button>
-                                <button type="reset" class="btn btn-outline-secondary custom-btn-secondary">
-                                    <i class="fas fa-undo me-2"></i>
-                                    Limpiar Formulario
                                 </button>
                             </div>
                         </form>

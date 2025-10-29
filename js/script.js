@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Elementos del DOM
     const form = document.getElementById('registrationForm');
     const submitBtn = form.querySelector('button[type="submit"]');
-    const resetBtn = form.querySelector('button[type="reset"]');
     const successModal = new bootstrap.Modal(document.getElementById('successModal'));
     
     // Campos del formulario
@@ -18,8 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         email: document.getElementById('email'),
         whatsapp: document.getElementById('whatsapp'),
         otherGoal: document.getElementById('otherGoal'),
-        otherSource: document.getElementById('otherSource'),
-        terms: document.getElementById('terms')
+        otherSource: document.getElementById('otherSource')
     };
 
     // Configuración de validaciones personalizadas
@@ -30,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         documentNumber: {
             pattern: /^[0-9]{6,12}$/,
-            message: 'El documento debe tener entre 6 y 12 dígitos'
+            message: 'Si decides ingresarlo, debe tener entre 6 y 12 dígitos'
         },
         age: {
             min: 16,
@@ -56,17 +54,16 @@ document.addEventListener('DOMContentLoaded', function() {
         formatPhoneInput();
         setupConditionalFields();
         
-        // Focus inicial en el primer campo - siempre
+        // Focus inicial en el primer campo - solo al cargar
         setTimeout(() => {
-            fields.fullName.focus();
+            if (fields.fullName) {
+                fields.fullName.focus();
+            }
         }, 100);
-        
-        // Asegurar focus después de cualquier interacción
-        ensureNameFieldFocus();
     }
 
     function setupEventListeners() {
-        // Validación en tiempo real para campos de texto únicos
+        // Validación en tiempo real para todos los campos de texto (obligatorios y opcionales)
         const textFields = ['fullName', 'documentNumber', 'age', 'email', 'whatsapp'];
         textFields.forEach(fieldName => {
             if (fields[fieldName]) {
@@ -82,14 +79,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Envío del formulario
         form.addEventListener('submit', handleSubmit);
-
-        // Reset del formulario
-        resetBtn.addEventListener('click', handleReset);
-
-        // Validación de términos y condiciones
-        if (fields.terms) {
-            fields.terms.addEventListener('change', validateTerms);
-        }
 
         // Radio buttons para mostrar/ocultar campos condicionales
         const goalOtherRadio = document.getElementById('goalOther');
@@ -178,16 +167,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return isValid;
     }
 
-    function validateTerms() {
-        const termsField = fields.terms;
-        const isValid = termsField.checked;
-        
-        termsField.classList.remove('is-valid', 'is-invalid');
-        termsField.classList.add(isValid ? 'is-valid' : 'is-invalid');
-        
-        return isValid;
-    }
-
     function updateValidationMessage(field, message, isValid) {
         const feedback = field.parentNode.querySelector('.invalid-feedback');
         if (feedback && !isValid && message) {
@@ -237,41 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return validateAllFields();
     }
 
-    function ensureNameFieldFocus() {
-        // Focus periódico en el campo de nombre si no hay ningún campo enfocado
-        setInterval(() => {
-            const activeElement = document.activeElement;
-            const isInputFocused = activeElement && (
-                activeElement.tagName === 'INPUT' || 
-                activeElement.tagName === 'TEXTAREA' || 
-                activeElement.tagName === 'SELECT'
-            );
-            
-            // Si no hay ningún input enfocado y el modal no está abierto
-            if (!isInputFocused && !document.querySelector('.modal.show')) {
-                fields.fullName.focus();
-            }
-        }, 2000); // Revisar cada 2 segundos
-
-        // Focus al hacer clic en áreas vacías del formulario
-        const formCard = document.querySelector('.registration-card');
-        if (formCard) {
-            formCard.addEventListener('click', (e) => {
-                // Si el clic no fue en un elemento interactivo
-                if (!e.target.matches('input, button, select, textarea, a, label')) {
-                    fields.fullName.focus();
-                }
-            });
-        }
-
-        // Focus al presionar Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                fields.fullName.focus();
-            }
-        });
-    }
-
     function handleSubmit(e) {
         e.preventDefault();
         
@@ -305,12 +249,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const validationResults = [];
 
         // 1. Validar campos de texto obligatorios
-        const requiredTextFields = ['fullName', 'documentNumber', 'age', 'email', 'whatsapp'];
+        const requiredTextFields = ['fullName', 'age', 'email', 'whatsapp'];
         requiredTextFields.forEach(fieldName => {
             const result = validateField(fieldName);
             validationResults.push({ field: fieldName, valid: result });
             if (!result) isFormValid = false;
         });
+
+        // 1.1. Validar campo de documento (opcional)
+        const documentResult = validateField('documentNumber');
+        validationResults.push({ field: 'documentNumber', valid: documentResult });
+        // No afecta isFormValid porque es opcional
 
         // 2. Validar radio groups obligatorios
         const requiredRadioGroups = ['mainGoal', 'preferredSchedule', 'howDidYouKnow', 'consent'];
@@ -320,12 +269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!result) isFormValid = false;
         });
 
-        // 3. Validar términos y condiciones
-        const termsResult = validateTerms();
-        validationResults.push({ field: 'terms', valid: termsResult });
-        if (!termsResult) isFormValid = false;
-
-        // 4. Validar campos condicionales
+        // 3. Validar campos condicionales
         const conditionalResults = validateConditionalFields();
         validationResults.push(...conditionalResults);
         conditionalResults.forEach(result => {
@@ -463,7 +407,6 @@ document.addEventListener('DOMContentLoaded', function() {
             howDidYouKnow: getRadioValue('howDidYouKnow'),
             otherSource: fields.otherSource ? fields.otherSource.value.trim() : '',
             consent: getRadioValue('consent'),
-            terms: fields.terms.checked,
             timestamp: new Date().toISOString()
         };
     }
@@ -509,13 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             handleReset();
         }, 1000);
 
-        // Asegurar focus en nombre después de cerrar modal
-        const modalElement = document.getElementById('successModal');
-        modalElement.addEventListener('hidden.bs.modal', () => {
-            setTimeout(() => {
-                fields.fullName.focus();
-            }, 100);
-        }, { once: true });
+        // No hacer focus automático después del modal
     }
 
     function handleReset() {
@@ -557,8 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
             otherSourceInput.removeAttribute('required');
         }
         
-        // Enfocar automáticamente el primer campo para mejor UX
-        fields.fullName.focus();
+        // No hacer focus automático después del reset
     }
 
     // Funciones para campos condicionales
@@ -732,21 +668,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Focus adicional después de la carga completa
-    setTimeout(() => {
-        const nameField = document.getElementById('fullName');
-        if (nameField) {
-            nameField.focus();
-        }
-    }, 200);
-
-    // Focus al cambiar de ventana/tab y regresar
-    window.addEventListener('focus', () => {
-        setTimeout(() => {
-            const nameField = document.getElementById('fullName');
-            if (nameField && !document.querySelector('.modal.show')) {
-                nameField.focus();
-            }
-        }, 100);
-    });
+    // Solo focus inicial al cargar el DOM - sin eventos adicionales
 });
