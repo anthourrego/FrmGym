@@ -3,6 +3,15 @@
  * Script principal para manejar la validación y envío del formulario
  */
 
+// Clase personalizada para errores de validación
+class ValidationError extends Error {
+    constructor(data) {
+        super(data.message || 'Error de validación');
+        this.name = 'ValidationError';
+        this.data = data;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos del DOM
     const form = document.getElementById('registrationForm');
@@ -320,15 +329,57 @@ document.addEventListener('DOMContentLoaded', function() {
         return results;
     }
 
-    function showFieldError(field, message) {
+    function showFieldError(field, message, isRadioGroup = false) {
+        let container = field;
+        
+        // Para grupos de radio buttons, usar el contenedor del grupo
+        if (isRadioGroup || field.type === 'radio') {
+            container = field.closest('.form-section') || field.closest('.mb-3') || field.parentNode;
+        } else {
+            container = field.parentNode;
+        }
+        
         // Buscar o crear el elemento de feedback
-        let feedback = field.parentNode.querySelector('.invalid-feedback');
+        let feedback = container.querySelector('.invalid-feedback');
+        
         if (!feedback) {
             feedback = document.createElement('div');
-            feedback.className = 'invalid-feedback';
-            field.parentNode.appendChild(feedback);
+            feedback.className = 'invalid-feedback server-error-message';
+            feedback.style.display = 'block'; // Asegurar que se muestre
+            
+            // Para grupos de radio, insertar después del último radio del grupo
+            if (isRadioGroup || field.type === 'radio') {
+                const radioInputs = container.querySelectorAll('input[type="radio"]');
+                const lastRadio = radioInputs[radioInputs.length - 1];
+                if (lastRadio) {
+                    lastRadio.parentNode.parentNode.appendChild(feedback);
+                } else {
+                    container.appendChild(feedback);
+                }
+            } else {
+                // Para campos normales
+                field.parentNode.appendChild(feedback);
+            }
         }
-        feedback.textContent = message;
+        
+        // Mostrar el mensaje con icono para errores del servidor
+        feedback.innerHTML = `
+            <i class="fas fa-exclamation-circle me-1"></i>
+            ${message}
+        `;
+        
+        // Agregar clase para identificar como error del servidor
+        feedback.classList.add('server-error-message');
+        
+        // Animar la aparición del mensaje
+        feedback.style.opacity = '0';
+        feedback.style.transform = 'translateY(-5px)';
+        
+        setTimeout(() => {
+            feedback.style.transition = 'all 0.3s ease';
+            feedback.style.opacity = '1';
+            feedback.style.transform = 'translateY(0)';
+        }, 50);
     }
 
     function showValidationErrors() {
@@ -396,35 +447,526 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Realizar petición AJAX
-        fetch('/', {
+        // Configurar timeout y controlador de aborto
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+
+        // Realizar petición con fetch mejorado
+        fetch(window.location.origin + '/register', {
             method: 'POST',
             body: submitData,
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            signal: controller.signal
         })
         .then(response => {
+            clearTimeout(timeoutId);
+            
+            // Verificar el tipo de contenido
+            const contentType = response.headers.get('content-type');
+            const isJson = contentType && contentType.includes('application/json');
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Manejar diferentes códigos de error HTTP
+                return response.text().then(text => {
+                    let errorData = null;
+                    let errorMessage = 'Error del servidor';
+                    
+                    if (isJson) {
+                        try {
+                            errorData = JSON.parse(text);
+                            errorMessage = errorData.message || errorMessage;
+                            
+                            // Para errores de validación (422), pasar los datos completos
+                            if (response.status === 422 && errorData.errors) {
+                                console.log('🔍 Error 422 detectado con datos de validación:', errorData);
+                                throw new ValidationError(errorData);
+                            }
+                            
+                        } catch (e) {
+                            // Si es ValidationError, relanzar
+                            if (e instanceof ValidationError) {
+                                throw e;
+                            }
+                            // Si no se puede parsear JSON, usar mensaje por defecto
+                        }
+                    }
+                    
+                    switch (response.status) {
+                        case 400:
+                            errorMessage = 'Los datos enviados no son válidos';
+                            break;
+                        case 422:
+                            errorMessage = 'Error de validación en el servidor';
+                            break;
+                        case 500:
+                            errorMessage = 'Error interno del servidor. Por favor intenta más tarde';
+                            break;
+                        case 503:
+                            errorMessage = 'Servicio temporalmente no disponible';
+                            break;
+                    }
+                    
+                    throw new Error(`${response.status}: ${errorMessage}`);
+                });
             }
+            
+            if (!isJson) {
+                throw new Error('Respuesta del servidor no válida');
+            }
+            
             return response.json();
         })
         .then(data => {
             if (data.success) {
-                showSuccess(data.message);
-                // Opcional: mostrar información adicional
-                console.log('Registro exitoso:', data.data);
+                // Registro exitoso
+                handleSuccessResponse(data);
             } else {
-                showError(data.message || 'Error al procesar el registro');
+                // Error en la respuesta del servidor
+                handleErrorResponse(data);
             }
         })
         .catch(error => {
-            console.error('Error en el envío:', error);
-            showError('Error de conexión. Por favor intenta nuevamente.');
+            // Manejar específicamente errores de validación
+            if (error instanceof ValidationError) {
+                console.log('🎯 Procesando error de validación:', error.data);
+                handleErrorResponse(error.data);
+            } else {
+                handleNetworkError(error);
+            }
         })
         .finally(() => {
+            clearTimeout(timeoutId);
             setLoadingState(false);
+        });
+    }
+
+    function handleSuccessResponse(data) {
+        console.log('✅ Registro exitoso:', data);
+        
+        // Mostrar mensaje de éxito personalizado
+        const message = data.message || '¡Registro exitoso! Te contactaremos pronto.';
+        showSuccess(message);
+        
+        // Log información adicional si está disponible
+        if (data.data) {
+            console.log('📊 Datos del registro:', {
+                id: data.data.id,
+                nombre: data.data.name,
+                email: data.data.email,
+                consentimiento: data.data.consent_given ? 'Sí' : 'No'
+            });
+        }
+        
+        // Opcional: Enviar evento personalizado para analytics
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'registro_completado', {
+                'custom_parameter': data.data?.consent_given || false
+            });
+        }
+        
+        // Guardar referencia local para debugging (solo en desarrollo)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            localStorage.setItem('lastRegistration', JSON.stringify({
+                timestamp: new Date().toISOString(),
+                data: data.data
+            }));
+        }
+    }
+
+    function handleErrorResponse(data) {
+        console.error('❌ Error en respuesta del servidor:', data);
+        console.log('📋 Estructura completa de datos:', JSON.stringify(data, null, 2));
+        
+        let errorMessage = data.message || 'Error al procesar el registro';
+        let errorType = 'server';
+        
+        // Verificar si tiene la sección 'errors' específicamente
+        if (data.errors && typeof data.errors === 'object') {
+            console.log('🔍 Sección de errors encontrada:', data.errors);
+            
+            // Procesar los errores independientemente del error_type
+            const processedErrors = processValidationErrors(data.errors);
+            
+            if (processedErrors.length > 0) {
+                console.log('✅ Errores procesados exitosamente:', processedErrors);
+                errorType = 'validation';
+                
+                // Crear mensaje de error personalizado
+                if (processedErrors.length === 1) {
+                    errorMessage = processedErrors[0].message;
+                } else {
+                    errorMessage = `Se encontraron ${processedErrors.length} errores de validación:\n` + 
+                                 processedErrors.map(error => `• ${error.field}: ${error.message}`).join('\n');
+                }
+                
+                // Resaltar campos con errores específicos
+                highlightServerValidationErrors(data.errors);
+                
+                // Mostrar notificación detallada para errores de validación
+                showValidationErrorNotification(processedErrors);
+                return;
+            } else {
+                console.warn('⚠️ No se pudieron procesar los errores de validación');
+            }
+        } else {
+            console.log('ℹ️ No se encontró sección de errors o no es un objeto válido');
+        }
+        
+        // Para otros tipos de errores, usar el método estándar
+        showError(errorMessage, errorType);
+    }
+
+    function processValidationErrors(errors) {
+        console.log('🔄 Iniciando procesamiento de errores:', errors);
+        const processedErrors = [];
+        
+        // Verificar que errors sea un objeto válido
+        if (!errors || typeof errors !== 'object') {
+            console.warn('⚠️ Errors no es un objeto válido:', errors);
+            return processedErrors;
+        }
+        
+        // Procesar cada campo con errores
+        Object.keys(errors).forEach(fieldName => {
+            console.log(`🔍 Procesando campo: ${fieldName}`);
+            let fieldErrors = errors[fieldName];
+            
+            // Log del valor original
+            console.log(`   📝 Valor original:`, fieldErrors);
+            
+            // Manejar diferentes formatos de errores
+            if (typeof fieldErrors === 'string') {
+                // Error único como string
+                processedErrors.push({
+                    field: getFieldDisplayName(fieldName),
+                    fieldName: fieldName,
+                    message: fieldErrors
+                });
+                console.log(`   ✅ Procesado como string: ${fieldErrors}`);
+            } else if (Array.isArray(fieldErrors)) {
+                // Array de errores
+                fieldErrors.forEach((errorMsg, index) => {
+                    if (errorMsg && typeof errorMsg === 'string') {
+                        processedErrors.push({
+                            field: getFieldDisplayName(fieldName),
+                            fieldName: fieldName,
+                            message: errorMsg
+                        });
+                        console.log(`   ✅ Procesado array[${index}]: ${errorMsg}`);
+                    } else {
+                        console.warn(`   ⚠️ Error inválido en array[${index}]:`, errorMsg);
+                    }
+                });
+            } else {
+                // Intentar convertir a string
+                const errorStr = String(fieldErrors);
+                if (errorStr && errorStr !== 'undefined' && errorStr !== 'null') {
+                    processedErrors.push({
+                        field: getFieldDisplayName(fieldName),
+                        fieldName: fieldName,
+                        message: errorStr
+                    });
+                    console.log(`   ✅ Procesado como conversión: ${errorStr}`);
+                } else {
+                    console.warn(`   ⚠️ Error no procesable:`, fieldErrors);
+                }
+            }
+        });
+        
+        console.log(`📊 Total de errores procesados: ${processedErrors.length}`);
+        return processedErrors;
+    }
+
+    function getFieldDisplayName(fieldName) {
+        const displayNames = {
+            'fullName': 'Nombre completo',
+            'documentNumber': 'Número de documento',
+            'age': 'Edad',
+            'email': 'Correo electrónico',
+            'whatsapp': 'WhatsApp',
+            'mainGoal': 'Objetivo principal',
+            'otherGoal': 'Objetivo personalizado',
+            'preferredSchedule': 'Horario preferido',
+            'howDidYouKnow': 'Cómo nos conociste',
+            'otherSource': 'Fuente personalizada',
+            'consent': 'Consentimiento'
+        };
+        
+        return displayNames[fieldName] || fieldName;
+    }
+
+    function showValidationErrorNotification(processedErrors) {
+        // Crear notificación personalizada para errores de validación
+        let errorHtml = '';
+        
+        if (processedErrors.length === 1) {
+            errorHtml = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <div>
+                        <strong>Error de Validación</strong><br>
+                        <small>${processedErrors[0].message}</small>
+                    </div>
+                </div>
+            `;
+        } else {
+            errorHtml = `
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                    <div>
+                        <strong>Errores de Validación (${processedErrors.length})</strong><br>
+                        <small>Por favor corrige los siguientes campos:</small>
+                        <ul class="mb-0 mt-1 ps-3">
+                            ${processedErrors.map(error => 
+                                `<li><strong>${error.field}:</strong> ${error.message}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+        
+        showNotification(errorHtml, 'warning', 10000); // 10 segundos para leer todos los errores
+        
+        // Vibrar si está disponible
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+        
+        // Crear resumen visual si hay múltiples errores
+        if (processedErrors.length > 1) {
+            createErrorSummaryWidget(processedErrors);
+        }
+    }
+
+    function createErrorSummaryWidget(errors) {
+        // Remover widget previo si existe
+        const existingWidget = document.getElementById('errorSummaryWidget');
+        if (existingWidget) {
+            existingWidget.remove();
+        }
+        
+        // Crear widget de resumen de errores
+        const widget = document.createElement('div');
+        widget.id = 'errorSummaryWidget';
+        widget.className = 'error-summary-widget';
+        widget.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 300px;
+            z-index: 8888;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: slideInLeft 0.3s ease-out;
+        `;
+        
+        widget.innerHTML = `
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="mb-0 text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${errors.length} Errores Encontrados
+                </h6>
+                <button type="button" class="btn-close btn-close-dark" onclick="this.parentElement.parentElement.remove()"></button>
+            </div>
+            <div class="error-list">
+                ${errors.map((error, index) => `
+                    <div class="error-item mb-1" style="font-size: 0.9rem;">
+                        <strong>${index + 1}.</strong>
+                        <span class="text-muted">${error.field}:</span>
+                        <span>${error.message}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">Haz clic en los campos resaltados para corregir</small>
+            </div>
+        `;
+        
+        document.body.appendChild(widget);
+        
+        // Auto-remover después de 15 segundos
+        setTimeout(() => {
+            if (widget.parentNode) {
+                widget.style.animation = 'slideOutLeft 0.3s ease-in';
+                setTimeout(() => {
+                    if (widget.parentNode) {
+                        widget.remove();
+                    }
+                }, 300);
+            }
+        }, 15000);
+    }
+
+    function handleNetworkError(error) {
+        console.error('🔌 Error de red/conexión:', error);
+        
+        let errorMessage = 'Error de conexión';
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'La solicitud tardó demasiado tiempo. Por favor intenta nuevamente.';
+        } else if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+            errorMessage = 'Sin conexión a internet. Verifica tu conexión y vuelve a intentar.';
+        } else if (error.message.includes('500')) {
+            errorMessage = 'Error del servidor. Nuestro equipo ha sido notificado.';
+        } else if (error.message.includes('400') || error.message.includes('422')) {
+            errorMessage = 'Error en los datos enviados. Por favor revisa la información e intenta nuevamente.';
+        }
+        
+        showError(errorMessage);
+        
+        // Opcional: Log para debugging
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('🐛 Error details:', {
+                name: error.name,
+                message: error.message,
+                stack: error.stack
+            });
+        }
+    }
+
+    function highlightServerValidationErrors(errors) {
+        console.log('🎯 Resaltando errores en campos:', errors);
+        
+        // Mapeo de campos del servidor a campos del frontend
+        const fieldMapping = {
+            'fullName': 'fullName',
+            'documentNumber': 'documentNumber', 
+            'age': 'age',
+            'email': 'email',
+            'whatsapp': 'whatsapp',
+            'mainGoal': 'mainGoal',
+            'otherGoal': 'otherGoal',
+            'preferredSchedule': 'preferredSchedule',
+            'howDidYouKnow': 'howDidYouKnow',
+            'otherSource': 'otherSource',
+            'consent': 'consent'
+        };
+        
+        let firstErrorField = null;
+        let errorCount = 0;
+        
+        // Limpiar errores previos
+        clearServerValidationErrors();
+        
+        Object.keys(errors).forEach(serverField => {
+            const frontendField = fieldMapping[serverField];
+            
+            if (frontendField) {
+                let field = fields[frontendField];
+                
+                // Para radio buttons, buscar el primer elemento del grupo
+                if (!field) {
+                    field = document.querySelector(`input[name="${frontendField}"]`);
+                }
+                
+                if (field) {
+                    let errorMessages = errors[serverField];
+                    
+                    // Asegurar que sea un array
+                    if (!Array.isArray(errorMessages)) {
+                        errorMessages = [errorMessages];
+                    }
+                    
+                    // Tomar el primer mensaje de error para mostrar
+                    const primaryError = errorMessages[0];
+                    
+                    if (primaryError && typeof primaryError === 'string') {
+                        // Marcar campo como inválido
+                        markFieldAsInvalid(field, frontendField, primaryError);
+                        
+                        // Guardar referencia al primer campo con error
+                        if (!firstErrorField) {
+                            firstErrorField = field;
+                        }
+                        
+                        errorCount++;
+                        
+                        console.log(`✅ Campo marcado con error: ${frontendField} - ${primaryError}`);
+                    }
+                }
+            } else {
+                console.warn(`⚠️ Campo no mapeado: ${serverField}`);
+            }
+        });
+        
+        // Enfocar y hacer scroll al primer campo con error
+        if (firstErrorField) {
+            setTimeout(() => {
+                firstErrorField.focus();
+                
+                // Hacer scroll suave al campo
+                const fieldContainer = firstErrorField.closest('.form-section') || firstErrorField.closest('.mb-3');
+                if (fieldContainer) {
+                    fieldContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                }
+                
+                // Resaltar temporalmente el campo
+                firstErrorField.style.animation = 'shake 0.5s ease-in-out';
+                setTimeout(() => {
+                    firstErrorField.style.animation = '';
+                }, 500);
+                
+            }, 100);
+        }
+        
+        // Resaltar secciones con errores
+        highlightErrorSections();
+        
+        console.log(`📊 Total de campos con errores: ${errorCount}`);
+    }
+
+    function markFieldAsInvalid(field, fieldName, errorMessage) {
+        // Para radio buttons, marcar todo el grupo
+        if (field.type === 'radio') {
+            const radioGroup = document.querySelectorAll(`input[name="${fieldName}"]`);
+            radioGroup.forEach(radio => {
+                radio.classList.remove('is-valid');
+                radio.classList.add('is-invalid');
+            });
+            
+            // Buscar el contenedor del grupo de radio buttons
+            const radioContainer = field.closest('.form-section') || field.closest('.mb-3');
+            if (radioContainer) {
+                showFieldError(radioContainer, errorMessage, true);
+            }
+        } else {
+            // Para campos normales
+            field.classList.remove('is-valid');
+            field.classList.add('is-invalid');
+            showFieldError(field, errorMessage);
+        }
+    }
+
+    function clearServerValidationErrors() {
+        // Limpiar todas las clases de validación previa
+        const allInputs = form.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            input.classList.remove('is-valid', 'is-invalid');
+        });
+        
+        // Limpiar mensajes de error previos
+        const errorMessages = form.querySelectorAll('.invalid-feedback, .server-error-message');
+        errorMessages.forEach(msg => {
+            if (msg.classList.contains('server-error-message')) {
+                msg.remove();
+            } else {
+                msg.textContent = '';
+            }
+        });
+        
+        // Limpiar resaltados de secciones
+        document.querySelectorAll('.form-section').forEach(section => {
+            section.classList.remove('section-error');
         });
     }
 
@@ -468,25 +1010,137 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function setLoadingState(loading) {
+        const loadingText = [
+            'Procesando registro...',
+            'Validando información...',
+            'Guardando datos...',
+            'Finalizando...'
+        ];
+        
         if (loading) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+            submitBtn.classList.add('loading');
+            
+            // Animar el texto de carga
+            let currentIndex = 0;
+            const updateLoadingText = () => {
+                if (submitBtn.disabled) {
+                    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i>${loadingText[currentIndex]}`;
+                    currentIndex = (currentIndex + 1) % loadingText.length;
+                }
+            };
+            
+            updateLoadingText();
+            window.loadingInterval = setInterval(updateLoadingText, 1500);
+            
+            // Deshabilitar todo el formulario durante el envío
             form.classList.add('loading');
+            const formElements = form.querySelectorAll('input, select, textarea, button');
+            formElements.forEach(element => {
+                element.disabled = true;
+            });
+            
+            // Mostrar indicador de progreso
+            showProgressIndicator();
+            
         } else {
             submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
             submitBtn.innerHTML = '<i class="fas fa-user-plus me-2"></i>Registrarme';
+            
+            // Limpiar intervalo de texto
+            if (window.loadingInterval) {
+                clearInterval(window.loadingInterval);
+                window.loadingInterval = null;
+            }
+            
+            // Rehabilitar formulario
             form.classList.remove('loading');
+            const formElements = form.querySelectorAll('input, select, textarea, button');
+            formElements.forEach(element => {
+                element.disabled = false;
+            });
+            
+            // Ocultar indicador de progreso
+            hideProgressIndicator();
+        }
+    }
+
+    function showProgressIndicator() {
+        // Crear barra de progreso si no existe
+        let progressBar = document.getElementById('submitProgress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'submitProgress';
+            progressBar.className = 'progress position-fixed';
+            progressBar.style.cssText = `
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                z-index: 9999;
+                border-radius: 0;
+            `;
+            progressBar.innerHTML = `
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                     role="progressbar" style="width: 0%"></div>
+            `;
+            document.body.appendChild(progressBar);
+        }
+        
+        // Animar progreso
+        const bar = progressBar.querySelector('.progress-bar');
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90; // No llegar al 100% hasta completar
+            bar.style.width = progress + '%';
+        }, 200);
+        
+        // Guardar referencia para limpiar después
+        progressBar.progressInterval = progressInterval;
+    }
+
+    function hideProgressIndicator() {
+        const progressBar = document.getElementById('submitProgress');
+        if (progressBar) {
+            // Completar barra
+            const bar = progressBar.querySelector('.progress-bar');
+            bar.style.width = '100%';
+            
+            // Limpiar intervalo
+            if (progressBar.progressInterval) {
+                clearInterval(progressBar.progressInterval);
+            }
+            
+            // Remover después de animación
+            setTimeout(() => {
+                if (progressBar.parentNode) {
+                    progressBar.remove();
+                }
+            }, 500);
         }
     }
 
     function showSuccess(message = '¡Registro exitoso! Te contactaremos pronto.') {
-        // Mostrar notificación de éxito
-        showNotification(message, 'success');
+        // Mostrar notificación de éxito con duración extendida
+        showNotification(`
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle me-2 text-success"></i>
+                <div>
+                    <strong>¡Éxito!</strong><br>
+                    <small>${message}</small>
+                </div>
+            </div>
+        `, 'success', 7000);
         
-        // Animar la tarjeta
+        // Animar la tarjeta con efecto de éxito
         const registrationCard = document.querySelector('.registration-card');
         if (registrationCard) {
             registrationCard.classList.add('success-animation');
+            
+            // Agregar efecto de confetti si está disponible
+            createSuccessAnimation();
         }
         
         // Mostrar modal de éxito si existe
@@ -496,21 +1150,177 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         }
         
+        // Vibrar dispositivo para feedback háptico (móviles)
+        if (navigator.vibrate) {
+            navigator.vibrate([100, 50, 100, 50, 100]);
+        }
+        
+        // Reproducir sonido de éxito si está disponible
+        playSuccessSound();
+        
         // Limpiar formulario después de un breve delay
         setTimeout(() => {
             handleReset();
-        }, 2000);
+            
+            // Remover animación de éxito
+            if (registrationCard) {
+                registrationCard.classList.remove('success-animation');
+            }
+        }, 3000);
+        
+        // Log de éxito
+        console.log('✅ Registro completado exitosamente');
     }
 
-    function showError(message = 'Error al procesar el registro. Por favor intenta nuevamente.') {
-        // Mostrar notificación de error
-        showNotification(message, 'danger');
+    function createSuccessAnimation() {
+        // Crear efecto de partículas de éxito simple
+        const particles = document.createElement('div');
+        particles.className = 'success-particles';
+        particles.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8888;
+        `;
+        
+        // Crear múltiples partículas
+        for (let i = 0; i < 15; i++) {
+            const particle = document.createElement('div');
+            particle.innerHTML = Math.random() > 0.5 ? '✨' : '🎉';
+            particle.style.cssText = `
+                position: absolute;
+                font-size: ${Math.random() * 20 + 15}px;
+                left: ${Math.random() * 100}%;
+                top: -50px;
+                animation: fall ${Math.random() * 3 + 2}s linear forwards;
+                opacity: 0.8;
+            `;
+            particles.appendChild(particle);
+        }
+        
+        document.body.appendChild(particles);
+        
+        // Remover después de la animación
+        setTimeout(() => {
+            if (particles.parentNode) {
+                particles.remove();
+            }
+        }, 5000);
+    }
+
+    function playSuccessSound() {
+        // Reproducir sonido de éxito si está disponible
+        try {
+            // Crear contexto de audio web
+            if (window.AudioContext || window.webkitAudioContext) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Crear un tono de éxito simple
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
+                oscillator.frequency.setValueAtTime(1108, audioContext.currentTime + 0.1); // C#6
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        } catch (error) {
+            // Silenciar errores de audio
+            console.log('Audio no disponible');
+        }
+    }
+
+    function showError(message = 'Error al procesar el registro. Por favor intenta nuevamente.', errorType = 'general') {
+        // Mostrar notificación de error con diferentes estilos según el tipo
+        const errorConfig = {
+            validation: {
+                type: 'warning',
+                icon: 'fas fa-exclamation-triangle',
+                title: 'Error de Validación'
+            },
+            network: {
+                type: 'danger',
+                icon: 'fas fa-wifi',
+                title: 'Error de Conexión'
+            },
+            server: {
+                type: 'danger', 
+                icon: 'fas fa-server',
+                title: 'Error del Servidor'
+            },
+            general: {
+                type: 'danger',
+                icon: 'fas fa-times-circle',
+                title: 'Error'
+            }
+        };
+
+        const config = errorConfig[errorType] || errorConfig.general;
+        
+        // Mostrar notificación mejorada con título e icono
+        showNotification(`
+            <div class="d-flex align-items-center">
+                <i class="${config.icon} me-2"></i>
+                <div>
+                    <strong>${config.title}</strong><br>
+                    <small>${message}</small>
+                </div>
+            </div>
+        `, config.type, 8000); // 8 segundos para errores
         
         // Remover clases de validación para permitir nuevo intento
         form.classList.remove('was-validated');
+        
+        // Log del error para debugging
+        console.error(`🔴 ${config.title}:`, message);
+        
+        // Vibrar dispositivo si está disponible (móviles)
+        if (navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]);
+        }
+        
+        // Mostrar opción de reintentar para errores de red
+        if (errorType === 'network') {
+            showRetryOption();
+        }
     }
 
-    function showNotification(message, type = 'info') {
+    function showRetryOption() {
+        // Crear botón de reintentar si no existe
+        let retryButton = document.getElementById('retryButton');
+        if (!retryButton) {
+            retryButton = document.createElement('button');
+            retryButton.id = 'retryButton';
+            retryButton.className = 'btn btn-outline-primary btn-sm mt-2';
+            retryButton.innerHTML = '<i class="fas fa-redo me-1"></i>Reintentar';
+            retryButton.onclick = () => {
+                retryButton.remove();
+                handleSubmit(new Event('submit'));
+            };
+            
+            // Insertar después del botón de envío
+            submitBtn.parentNode.insertBefore(retryButton, submitBtn.nextSibling);
+            
+            // Auto-remover después de 10 segundos
+            setTimeout(() => {
+                if (retryButton.parentNode) {
+                    retryButton.remove();
+                }
+            }, 10000);
+        }
+    }
+
+    function showNotification(message, type = 'info', duration = 5000) {
         // Crear o actualizar notificación
         let notification = document.getElementById('notification');
         
@@ -522,27 +1332,84 @@ document.addEventListener('DOMContentLoaded', function() {
                 top: 20px;
                 right: 20px;
                 z-index: 9999;
-                min-width: 300px;
+                min-width: 320px;
                 max-width: 500px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                border: none;
+                border-radius: 8px;
             `;
             document.body.appendChild(notification);
         }
         
-        // Configurar el tipo de alerta
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        // Configurar el tipo de alerta con mejores estilos
+        const alertTypes = {
+            success: 'alert-success',
+            danger: 'alert-danger', 
+            warning: 'alert-warning',
+            info: 'alert-info'
+        };
         
-        // Configurar el contenido
+        notification.className = `alert ${alertTypes[type] || alertTypes.info} alert-dismissible fade show position-fixed`;
+        
+        // Configurar el contenido con mejor estructura
         notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
         `;
         
-        // Auto-cerrar después de 5 segundos
+        // Agregar animación de entrada
+        notification.style.transform = 'translateX(100%)';
+        notification.style.transition = 'transform 0.3s ease-out';
+        
+        // Animar entrada
         setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto-cerrar con duración personalizada
+        const autoCloseTimer = setTimeout(() => {
             if (notification && notification.parentNode) {
-                notification.remove();
+                // Animar salida
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
             }
-        }, 5000);
+        }, duration);
+        
+        // Limpiar timer si se cierra manualmente
+        const closeButton = notification.querySelector('.btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                clearTimeout(autoCloseTimer);
+            });
+        }
+        
+        // Pausar auto-close al hacer hover (para errores importantes)
+        if (type === 'danger' || type === 'warning') {
+            notification.addEventListener('mouseenter', () => {
+                clearTimeout(autoCloseTimer);
+            });
+            
+            notification.addEventListener('mouseleave', () => {
+                setTimeout(() => {
+                    if (notification && notification.parentNode) {
+                        notification.style.transform = 'translateX(100%)';
+                        setTimeout(() => {
+                            if (notification.parentNode) {
+                                notification.remove();
+                            }
+                        }, 300);
+                    }
+                }, 2000); // 2 segundos adicionales después del hover
+            });
+        }
     }
 
     function handleReset() {

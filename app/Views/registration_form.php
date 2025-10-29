@@ -421,5 +421,17 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Custom JS -->
     <script src="js/script.js"></script>
+    
+    <?php if (ENVIRONMENT === 'development'): ?>
+    <!-- Archivo de pruebas de errores (solo en desarrollo) -->
+    <script src="js/test-errors.js"></script>
+    <script>
+        console.log('🛠️ Modo desarrollo activo');
+        console.log('💡 Comandos disponibles para probar errores:');
+        console.log('   - simulateErrorResponse("multiple") - Errores múltiples');
+        console.log('   - simulateErrorResponse("single") - Error único');  
+        console.log('   - simulateErrorResponse("server") - Error de servidor');
+    </script>
+    <?php endif; ?>
 </body>
 </html>

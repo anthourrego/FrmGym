@@ -10,7 +10,7 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 
 // Procesar formulario de registro
-$routes->post('/', 'Home::register');
+$routes->post('register', 'Home::register');
 
 // Endpoint para estadísticas básicas
 $routes->get('stats', 'Home::stats');
