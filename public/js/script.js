@@ -13,6 +13,36 @@ class ValidationError extends Error {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Verificar si debe enfocar el campo nombre después de recarga
+    if (sessionStorage.getItem('focusNameField') === 'true') {
+        sessionStorage.removeItem('focusNameField');
+        
+        // Ir al top de la página
+        if (sessionStorage.getItem('scrollToTop') === 'true') {
+            sessionStorage.removeItem('scrollToTop');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Enfocar el campo nombre después de un pequeño delay
+        setTimeout(() => {
+            const nameField = document.getElementById('fullName');
+            if (nameField) {
+                nameField.focus();
+                nameField.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+                
+                // Mostrar una notificación sutil
+                showNotification(
+                    'success', 
+                    '¡Registro completado! Puedes comenzar un nuevo registro.',
+                    3000
+                );
+            }
+        }, 500);
+    }
+    
     // Elementos del DOM
     const form = document.getElementById('registrationForm');
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -220,11 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function validateForm() {
-        // Esta función se mantiene para compatibilidad, pero ahora usa validateAllFields
-        return validateAllFields();
-    }
-
     function handleSubmit(e) {
         e.preventDefault();
         
@@ -285,8 +310,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!result.valid) isFormValid = false;
         });
 
-        // Log para debugging
-        console.log('Resultados de validación:', validationResults);
+        // Log para debugging en desarrollo
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('Resultados de validación:', validationResults);
+        }
 
         return isFormValid;
     }
@@ -481,7 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Para errores de validación (422), pasar los datos completos
                             if (response.status === 422 && errorData.errors) {
-                                console.log('🔍 Error 422 detectado con datos de validación:', errorData);
                                 throw new ValidationError(errorData);
                             }
                             
@@ -531,7 +557,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             // Manejar específicamente errores de validación
             if (error instanceof ValidationError) {
-                console.log('🎯 Procesando error de validación:', error.data);
                 handleErrorResponse(error.data);
             } else {
                 handleNetworkError(error);
@@ -544,14 +569,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleSuccessResponse(data) {
-        console.log('✅ Registro exitoso:', data);
-        
         // Mostrar mensaje de éxito personalizado
         const message = data.message || '¡Registro exitoso! Te contactaremos pronto.';
         showSuccess(message);
         
-        // Log información adicional si está disponible
-        if (data.data) {
+        // Log información adicional si está disponible (solo en desarrollo)
+        if (data.data && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
             console.log('📊 Datos del registro:', {
                 id: data.data.id,
                 nombre: data.data.name,
@@ -578,20 +601,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function handleErrorResponse(data) {
         console.error('❌ Error en respuesta del servidor:', data);
-        console.log('📋 Estructura completa de datos:', JSON.stringify(data, null, 2));
         
         let errorMessage = data.message || 'Error al procesar el registro';
         let errorType = 'server';
         
         // Verificar si tiene la sección 'errors' específicamente
         if (data.errors && typeof data.errors === 'object') {
-            console.log('🔍 Sección de errors encontrada:', data.errors);
-            
             // Procesar los errores independientemente del error_type
             const processedErrors = processValidationErrors(data.errors);
             
             if (processedErrors.length > 0) {
-                console.log('✅ Errores procesados exitosamente:', processedErrors);
                 errorType = 'validation';
                 
                 // Crear mensaje de error personalizado
@@ -608,11 +627,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Mostrar notificación detallada para errores de validación
                 showValidationErrorNotification(processedErrors);
                 return;
-            } else {
-                console.warn('⚠️ No se pudieron procesar los errores de validación');
             }
-        } else {
-            console.log('ℹ️ No se encontró sección de errors o no es un objeto válido');
         }
         
         // Para otros tipos de errores, usar el método estándar
@@ -620,22 +635,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function processValidationErrors(errors) {
-        console.log('🔄 Iniciando procesamiento de errores:', errors);
         const processedErrors = [];
         
         // Verificar que errors sea un objeto válido
         if (!errors || typeof errors !== 'object') {
-            console.warn('⚠️ Errors no es un objeto válido:', errors);
             return processedErrors;
         }
         
         // Procesar cada campo con errores
         Object.keys(errors).forEach(fieldName => {
-            console.log(`🔍 Procesando campo: ${fieldName}`);
             let fieldErrors = errors[fieldName];
-            
-            // Log del valor original
-            console.log(`   📝 Valor original:`, fieldErrors);
             
             // Manejar diferentes formatos de errores
             if (typeof fieldErrors === 'string') {
@@ -645,19 +654,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     fieldName: fieldName,
                     message: fieldErrors
                 });
-                console.log(`   ✅ Procesado como string: ${fieldErrors}`);
             } else if (Array.isArray(fieldErrors)) {
                 // Array de errores
-                fieldErrors.forEach((errorMsg, index) => {
+                fieldErrors.forEach((errorMsg) => {
                     if (errorMsg && typeof errorMsg === 'string') {
                         processedErrors.push({
                             field: getFieldDisplayName(fieldName),
                             fieldName: fieldName,
                             message: errorMsg
                         });
-                        console.log(`   ✅ Procesado array[${index}]: ${errorMsg}`);
-                    } else {
-                        console.warn(`   ⚠️ Error inválido en array[${index}]:`, errorMsg);
                     }
                 });
             } else {
@@ -669,14 +674,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         fieldName: fieldName,
                         message: errorStr
                     });
-                    console.log(`   ✅ Procesado como conversión: ${errorStr}`);
-                } else {
-                    console.warn(`   ⚠️ Error no procesable:`, fieldErrors);
                 }
             }
         });
         
-        console.log(`📊 Total de errores procesados: ${processedErrors.length}`);
         return processedErrors;
     }
 
@@ -832,8 +833,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function highlightServerValidationErrors(errors) {
-        console.log('🎯 Resaltando errores en campos:', errors);
-        
         // Mapeo de campos del servidor a campos del frontend
         const fieldMapping = {
             'fullName': 'fullName',
@@ -887,12 +886,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                         
                         errorCount++;
-                        
-                        console.log(`✅ Campo marcado con error: ${frontendField} - ${primaryError}`);
                     }
                 }
-            } else {
-                console.warn(`⚠️ Campo no mapeado: ${serverField}`);
             }
         });
         
@@ -921,8 +916,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Resaltar secciones con errores
         highlightErrorSections();
-        
-        console.log(`📊 Total de campos con errores: ${errorCount}`);
     }
 
     function markFieldAsInvalid(field, fieldName, errorMessage) {
@@ -990,23 +983,6 @@ document.addEventListener('DOMContentLoaded', function() {
             otherSource: fields.otherSource ? fields.otherSource.value.trim() : null,
             consent: getRadioValue('consent')
         };
-    }
-
-    function processFormData(data) {
-        // Aquí puedes procesar los datos como necesites
-        console.log('Datos del formulario:', data);
-        
-        // Ejemplo: Guardar en localStorage (para demo)
-        const registrations = JSON.parse(localStorage.getItem('korpusRegistrations') || '[]');
-        registrations.push(data);
-        localStorage.setItem('korpusRegistrations', JSON.stringify(registrations));
-        
-        // Aquí harías la llamada real a tu API
-        // fetch('/api/register', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(data)
-        // });
     }
 
     function setLoadingState(loading) {
@@ -1130,6 +1106,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div>
                     <strong>¡Éxito!</strong><br>
                     <small>${message}</small>
+                    <br><small class="text-muted">La página se recargará en unos segundos...</small>
                 </div>
             </div>
         `, 'success', 7000);
@@ -1148,6 +1125,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (successModal) {
             const modal = new bootstrap.Modal(successModal);
             modal.show();
+            
+            // Agregar botón de "Continuar" al modal que recargue la página
+            const modalFooter = successModal.querySelector('.modal-footer');
+            if (modalFooter) {
+                const continueBtn = modalFooter.querySelector('.btn');
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => {
+                        sessionStorage.setItem('focusNameField', 'true');
+                        sessionStorage.setItem('scrollToTop', 'true');
+                        window.location.reload();
+                    });
+                }
+            }
         }
         
         // Vibrar dispositivo para feedback háptico (móviles)
@@ -1168,8 +1158,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 3000);
         
-        // Log de éxito
-        console.log('✅ Registro completado exitosamente');
+        // Mostrar contador regresivo y recargar página automáticamente
+        showReloadCountdown();
+        
+        // Log del éxito (solo en desarrollo)
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('✅ Registro completado exitosamente - Recargando página en 5 segundos');
+        }
     }
 
     function createSuccessAnimation() {
@@ -1209,6 +1204,107 @@ document.addEventListener('DOMContentLoaded', function() {
                 particles.remove();
             }
         }, 5000);
+    }
+
+    function showReloadCountdown() {
+        // Crear widget de cuenta regresiva
+        const countdownWidget = document.createElement('div');
+        countdownWidget.id = 'reloadCountdown';
+        countdownWidget.className = 'reload-countdown-widget';
+        countdownWidget.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 280px;
+            z-index: 9999;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+            animation: slideInRight 0.5s ease-out;
+            text-align: center;
+        `;
+        
+        let countdown = 5; // 5 segundos
+        
+        const updateCountdown = () => {
+            countdownWidget.innerHTML = `
+                <div class="d-flex flex-column align-items-center">
+                    <i class="fas fa-sync-alt fa-2x text-success mb-2" style="animation: rotate 2s linear infinite;"></i>
+                    <h6 class="mb-2 text-success">¡Registro Completado!</h6>
+                    <p class="mb-2">La página se recargará en:</p>
+                    <div class="countdown-number" style="
+                        font-size: 2rem;
+                        font-weight: bold;
+                        color: #28a745;
+                        background: white;
+                        border-radius: 50%;
+                        width: 60px;
+                        height: 60px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 10px;
+                        border: 3px solid #28a745;
+                    ">${countdown}</div>
+                    <button class="btn btn-sm btn-success" onclick="
+                        sessionStorage.setItem('focusNameField', 'true');
+                        sessionStorage.setItem('scrollToTop', 'true');
+                        window.location.reload();
+                    ">
+                        <i class="fas fa-redo me-1"></i>Recargar Ahora
+                    </button>
+                </div>
+            `;
+        };
+        
+        // Mostrar widget inicial
+        updateCountdown();
+        document.body.appendChild(countdownWidget);
+        
+        // Contador regresivo
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            
+            if (countdown > 0) {
+                updateCountdown();
+            } else {
+                clearInterval(countdownInterval);
+                
+                // Mostrar mensaje final antes de recargar
+                countdownWidget.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin fa-2x text-success mb-2"></i>
+                        <p class="mb-0 text-success"><strong>Recargando página...</strong></p>
+                    </div>
+                `;
+                
+                // Recargar la página con scroll al top y enfoque en nombre
+                setTimeout(() => {
+                    // Almacenar en sessionStorage que debe enfocar el campo nombre
+                    sessionStorage.setItem('focusNameField', 'true');
+                    sessionStorage.setItem('scrollToTop', 'true');
+                    window.location.reload();
+                }, 1000);
+            }
+        }, 1000);
+        
+        // Permitir cancelar la recarga
+        document.addEventListener('keydown', function cancelReload(e) {
+            if (e.key === 'Escape') {
+                clearInterval(countdownInterval);
+                if (countdownWidget.parentNode) {
+                    countdownWidget.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        if (countdownWidget.parentNode) {
+                            countdownWidget.remove();
+                        }
+                    }, 300);
+                }
+                document.removeEventListener('keydown', cancelReload);
+            }
+        });
     }
 
     function playSuccessSound() {
@@ -1552,78 +1648,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Funciones de utilidad adicionales
-    function showNotification(message, type = 'info') {
-        // Crear notificación toast
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-${type} border-0" role="alert">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="fas ${getIconForType(type)} me-2"></i>
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            </div>
-        `;
-        
-        // Agregar toast al DOM si no existe container
-        let toastContainer = document.querySelector('.toast-container');
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-            toastContainer.style.zIndex = '9999';
-            document.body.appendChild(toastContainer);
-        }
-        
-        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-        
-        const toastElement = toastContainer.lastElementChild;
-        const toast = new bootstrap.Toast(toastElement, {
-            autohide: type !== 'danger', // Los errores no se ocultan automáticamente
-            delay: type === 'danger' ? 8000 : 5000
-        });
-        toast.show();
-        
-        // Remover del DOM después de que se oculte
-        toastElement.addEventListener('hidden.bs.toast', () => {
-            toastElement.remove();
-        });
-    }
-
-    function getIconForType(type) {
-        const icons = {
-            'success': 'fa-check-circle',
-            'danger': 'fa-exclamation-triangle',
-            'warning': 'fa-exclamation-circle',
-            'info': 'fa-info-circle'
-        };
-        return icons[type] || 'fa-info-circle';
-    }
-
     // Exponer funciones útiles al scope global para debugging
     window.KorpusForm = {
-        validateForm,
+        validateAllFields,
         collectFormData,
-        showNotification
+        showNotification: showNotification
     };
 });
 
-// Funciones adicionales para mejorar la experiencia de usuario
-document.addEventListener('DOMContentLoaded', function() {
-    // Mejorar accesibilidad con navegación por teclado
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
-            const form = e.target.closest('form');
-            const inputs = Array.from(form.querySelectorAll('input, select, textarea'));
-            const index = inputs.indexOf(e.target);
-            
-            if (index > -1 && index < inputs.length - 1) {
-                e.preventDefault();
-                inputs[index + 1].focus();
-            }
+// Mejorar accesibilidad con navegación por teclado
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+        const form = e.target.closest('form');
+        if (!form) return;
+        
+        const inputs = Array.from(form.querySelectorAll('input, select, textarea'));
+        const index = inputs.indexOf(e.target);
+        
+        if (index > -1 && index < inputs.length - 1) {
+            e.preventDefault();
+            inputs[index + 1].focus();
         }
-    });
-
-    // Solo focus inicial al cargar el DOM - sin eventos adicionales
+    }
 });
