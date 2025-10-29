@@ -16,315 +16,8 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchbuilder/1.6.0/css/searchBuilder.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.5.1/css/dataTables.dateTime.min.css">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?= base_url('css/styles.css') ?>">
-    
-    <style>
-        body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            min-height: 100vh;
-            position: relative;
-        }
-        
-        /* Patrón de fondo sutil */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                radial-gradient(circle at 20% 80%, var(--korpus-acero-light) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--korpus-acero-light) 0%, transparent 50%);
-            z-index: -1;
-        }
-        
-        .admin-header {
-            background: var(--korpus-gradient);
-            color: var(--korpus-white);
-            padding: 2rem 0;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 32px var(--korpus-shadow);
-            position: relative;
-        }
-        
-        .admin-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
-            opacity: 0.5;
-        }
-        
-        .admin-header .content {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .admin-header h1 {
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-            color: var(--korpus-white);
-        }
-        
-        .admin-card {
-            background: var(--korpus-white);
-            border-radius: 20px;
-            box-shadow: 
-                0 10px 30px rgba(0, 0, 0, 0.1),
-                0 0 0 1px var(--korpus-acero-light);
-            border: none;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .admin-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.15),
-                0 0 0 1px var(--korpus-acero-light);
-        }
-        
-        .stats-card {
-            background: var(--korpus-gradient);
-            color: var(--korpus-white);
-            border-radius: 16px;
-            padding: 1.8rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 
-                0 8px 25px var(--korpus-shadow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .stats-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transition: left 0.8s;
-        }
-        
-        .stats-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 12px 35px var(--korpus-shadow),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-        
-        .stats-card:hover::before {
-            left: 100%;
-        }
-        
-        .stats-card .stats-number {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .stats-card .stats-icon {
-            font-size: 3rem;
-            opacity: 0.3;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn-admin {
-            background: var(--korpus-gradient);
-            border: none;
-            border-radius: 10px;
-            color: var(--korpus-white);
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px var(--korpus-shadow);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-admin::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
-        }
-        
-        .btn-admin:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px var(--korpus-shadow);
-            color: var(--korpus-white);
-        }
-        
-        .btn-admin:active::before {
-            width: 300px;
-            height: 300px;
-        }
-        
-        .btn-outline-light {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: var(--korpus-white);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
-        .btn-outline-light:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: var(--korpus-white);
-            border-color: rgba(255, 255, 255, 0.5);
-        }
-        
-        /* Solo mantener estilos básicos para los modales */
-        
-        .modal-header {
-            background: var(--korpus-gradient);
-            color: var(--korpus-white);
-            border: none;
-            position: relative;
-        }
-        
-        .modal-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-        }
-        
-        .modal-content {
-            border-radius: 20px;
-            border: none;
-            overflow: hidden;
-            box-shadow: 0 20px 40px var(--korpus-shadow);
-        }
-        
-        .detail-row {
-            padding: 0.8rem 0;
-            border-bottom: 1px solid var(--korpus-acero-light);
-            transition: all 0.2s ease;
-        }
-        
-        .detail-row:hover {
-            background: var(--korpus-acero-light);
-            margin: 0 -1rem;
-            padding-left: 1rem;
-            padding-right: 1rem;
-            border-radius: 8px;
-        }
-        
-        .detail-label {
-            font-weight: 700;
-            color: var(--korpus-potency);
-        }
-        
-        .detail-value {
-            color: #6c757d;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        
-        .loading-spinner {
-            text-align: center;
-            background: var(--korpus-white);
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px var(--korpus-shadow);
-        }
-        
-        .spinner-border {
-            color: var(--korpus-acero);
-        }
-        
-        .badge {
-            font-weight: 600;
-            padding: 0.5rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-        
-        .btn-group .btn {
-            border-radius: 8px;
-            margin: 0 0.1rem;
-            transition: all 0.2s ease;
-        }
-        
-        .btn-outline-info:hover {
-            background: #0dcaf0;
-            transform: translateY(-1px);
-        }
-        
-        .btn-outline-danger:hover {
-            background: #dc3545;
-            transform: translateY(-1px);
-        }
-        
-        /* Responsive mejoras */
-        @media (max-width: 992px) {
-            .admin-header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .stats-card .stats-number {
-                font-size: 2.2rem;
-            }
-            
-            .stats-card .stats-icon {
-                font-size: 2.5rem;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .admin-header {
-                padding: 1.5rem 0;
-            }
-            
-            .stats-card {
-                margin-bottom: 1rem;
-                padding: 1.5rem;
-            }
-            
-            .btn-group {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .btn-group .btn {
-                margin-bottom: 0.5rem;
-                border-radius: 10px !important;
-            }
-            
-            .table-wrapper {
-                border-radius: 15px;
-            }
-        }
-    </style>
+    <!-- Admin Dashboard Styles -->
+    <link rel="stylesheet" href="<?= base_url('css/admin-dashboard.css') ?>">
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -338,40 +31,25 @@
         </div>
     </div>
 
-    <!-- Header -->
-    <div class="admin-header">
-        <div class="content">
-            <div class="container-fluid">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h1 class="mb-0">
-                            <i class="fas fa-tachometer-alt me-3"></i>
-                            Panel de Administración
-                        </h1>
-                        <p class="mb-0 mt-2 opacity-75">KORPUS Training Club - Gestión de Registros</p>
-                    </div>
-                    <div class="col-md-6 text-md-end">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-light btn-admin" onclick="exportData()">
-                                <i class="fas fa-download me-2"></i>
-                                Exportar CSV
-                            </button>
-                            <button type="button" class="btn btn-light btn-admin" onclick="refreshData()">
-                                <i class="fas fa-sync-alt me-2"></i>
-                                Actualizar
-                            </button>
-                            <a href="<?= base_url('admin/logout') ?>" class="btn btn-outline-light">
-                                <i class="fas fa-sign-out-alt me-2"></i>
-                                Cerrar Sesión
-                            </a>
-                        </div>
-                    </div>
-                </div>
+    <!-- Header con clases Bootstrap estándar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <img src="<?= base_url('assets/isotipo.webp') ?>" alt="KORPUS" height="28" class="me-2">
+            </a>
+            <span class="navbar-text me-auto">
+                KORPUS Training Club - Gestión de Registros
+            </span>
+            <div class="d-flex">
+                <a href="<?= base_url('admin/logout') ?>" class="btn btn-outline-light">
+                    <i class="fas fa-sign-out-alt me-2"></i>
+                    Cerrar Sesión
+                </a>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="container-fluid">
+    <div class="container-fluid mt-4">
         <!-- Estadísticas -->
         <div class="row mb-4">
             <div class="col-lg-3 col-md-6">
@@ -431,7 +109,7 @@
         <!-- Tabla de Registros -->
         <div class="row">
             <div class="col-12">
-                <div class="admin-card">
+                <div class="card shadow-sm">
                     <div class="card-header bg-white border-0 py-3">
                         <h4 class="mb-0">
                             <i class="fas fa-table me-2 text-primary"></i>
@@ -540,6 +218,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     
+    <!-- Custom DataTables JavaScript -->
+    <script src="<?= base_url('js/DataTables.js') ?>"></script>
+    
     <script>
         let dataTable;
         let deleteRecordId = null;
@@ -584,16 +265,28 @@
                     { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
                 ],
                 order: [[10, 'desc']], // Ordenar por fecha (más recientes primero)
-                pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
                 responsive: true,
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
-                },
                 // Layout estándar de Bootstrap con botones
-                dom: 'Bfrtip',
                 buttons: [
-                    'excel', 'pdf', 'print', 'colvis'
+                    {
+                        text: '<i class="fas fa-download me-2"></i>Exportar CSV',
+                        className: 'btn btn-success btn-sm',
+                        action: function (e, dt, node, config) {
+                            exportData();
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-sync-alt me-2"></i>Actualizar',
+                        className: 'btn btn-info btn-sm',
+                        action: function (e, dt, node, config) {
+                            refreshData();
+                        }
+                    },
+                    'excel', 
+                    'pdf', 
+                    'print', 
+                    'colvis'
                 ],
                 drawCallback: function() {
                     hideLoading();
