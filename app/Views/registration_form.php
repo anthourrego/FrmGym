@@ -18,10 +18,10 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
-        <div class="row w-100 justify-content-center">
+    <div class="container-fluid min-vh-100 py-2 py-md-3">
+        <div class="row justify-content-center">
             <div class="col-12 col-md-8 col-lg-6 col-xl-5">
-                <div class="card shadow-lg border-0 registration-card">
+                <div class="card shadow-lg border-0 registration-card my-2 my-md-3">
                     <div class="card-header text-center py-4">
                         <div class="logo-container">
                             <img src="assets/logo.webp" 

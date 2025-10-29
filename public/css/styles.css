@@ -32,6 +32,15 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+/* En dispositivos móviles, evitar background-attachment fixed */
+@media (max-width: 768px) {
+    body {
+        background-attachment: scroll;
+    }
 }
 
 /* Overlay para mejorar legibilidad */
@@ -48,15 +57,47 @@ body::before {
     pointer-events: none;
 }
 
+/* Espaciado y contenedor principal */
+.container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .container-fluid {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container-fluid {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+
 /* Card principal */
 .registration-card {
     background: var(--korpus-white);
     border-radius: 20px;
     overflow: hidden;
     max-width: 600px;
-    margin: 0 auto;
+    margin: 0.5rem auto;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
+}
+
+@media (min-width: 768px) {
+    .registration-card {
+        margin: 1rem auto;
+    }
+}
+
+@media (min-width: 1200px) {
+    .registration-card {
+        margin: 1.5rem auto;
+    }
 }
 
 .card-header {
@@ -98,6 +139,11 @@ body::before {
     border-left: 4px solid var(--korpus-acero);
     padding-left: 1rem;
     margin-left: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-section:last-of-type {
+    margin-bottom: 1rem;
 }
 
 .section-title {
@@ -105,6 +151,23 @@ body::before {
     font-weight: 600;
     font-size: 1.2rem;
     margin-bottom: 1rem;
+}
+
+/* Espaciado del contenido de la card */
+.card-body {
+    padding: 1.25rem !important;
+}
+
+@media (min-width: 768px) {
+    .card-body {
+        padding: 1.75rem !important;
+    }
+}
+
+@media (min-width: 1200px) {
+    .card-body {
+        padding: 2rem !important;
+    }
 }
 
 .section-title i {
