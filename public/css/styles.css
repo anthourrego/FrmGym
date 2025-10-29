@@ -16,6 +16,76 @@
     --korpus-gradient: linear-gradient(135deg, var(--korpus-acero) 0%, var(--korpus-potency) 100%);
 }
 
+/* Animaciones para componentes dinámicos */
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Widget de cuenta regresiva */
+.reload-countdown-widget {
+    font-family: inherit;
+}
+
+.reload-countdown-widget .countdown-number {
+    animation: pulse 1s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.reload-countdown-widget button {
+    transition: all 0.3s ease;
+}
+
+.reload-countdown-widget button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Responsive para el widget de countdown */
+@media (max-width: 768px) {
+    .reload-countdown-widget {
+        bottom: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+    }
+}
+
 /* Estilos generales */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -284,6 +354,27 @@ body::before {
 
 .form-check-label:hover {
     color: var(--korpus-acero);
+}
+
+/* Validación para radio buttons */
+.form-check-input.is-valid {
+    border-color: #198754;
+    background-color: transparent;
+}
+
+.form-check-input.is-valid:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.form-check-input.is-invalid {
+    border-color: #dc3545;
+    background-color: transparent;
+}
+
+.form-check-input.is-invalid:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
 }
 
 /* Caja de consentimiento */

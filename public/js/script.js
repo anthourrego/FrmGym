@@ -919,13 +919,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function markFieldAsInvalid(field, fieldName, errorMessage) {
-        // Para radio buttons, marcar todo el grupo
+        // Para radio buttons, marcar solo el primer radio del grupo para mostrar el error
         if (field.type === 'radio') {
             const radioGroup = document.querySelectorAll(`input[name="${fieldName}"]`);
+            const firstRadio = radioGroup[0];
+            
+            // Limpiar todas las validaciones previas del grupo
             radioGroup.forEach(radio => {
-                radio.classList.remove('is-valid');
-                radio.classList.add('is-invalid');
+                radio.classList.remove('is-valid', 'is-invalid');
             });
+            
+            // Marcar solo el primer radio como inválido para mostrar el error
+            if (firstRadio) {
+                firstRadio.classList.add('is-invalid');
+            }
             
             // Buscar el contenedor del grupo de radio buttons
             const radioContainer = field.closest('.form-section') || field.closest('.mb-3');
@@ -1630,20 +1637,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateRadioGroup(groupName) {
         const radios = document.querySelectorAll(`input[name="${groupName}"]`);
         const checked = document.querySelector(`input[name="${groupName}"]:checked`);
-        const firstRadio = radios[0];
         
-        // Limpiar clases previas
+        // Limpiar clases previas de todos los radios
         radios.forEach(radio => {
             radio.classList.remove('is-valid', 'is-invalid');
         });
 
         if (checked) {
-            // Marcar como válido
-            firstRadio.classList.add('is-valid');
+            // Marcar solo el radio seleccionado como válido
+            checked.classList.add('is-valid');
             return true;
         } else {
-            // Marcar como inválido
-            firstRadio.classList.add('is-invalid');
+            // Marcar el primer radio como inválido para mostrar el error
+            const firstRadio = radios[0];
+            if (firstRadio) {
+                firstRadio.classList.add('is-invalid');
+            }
             return false;
         }
     }
