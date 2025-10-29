@@ -11,15 +11,6 @@
 
 /* Variables locales que sobrescriben o extienden las del core */
 :root {
-    /* Asegurar compatibilidad con el diseño original */
-    --korpus-acero: #9CAFB7;
-    --korpus-potency: #121212;
-    --korpus-white: #FFFFFF;
-    --korpus-acero-light: rgba(156, 175, 183, 0.1);
-    --korpus-acero-dark: rgba(156, 175, 183, 0.8);
-    --korpus-shadow: rgba(18, 18, 18, 0.15);
-    --korpus-gradient: linear-gradient(135deg, var(--korpus-acero) 0%, var(--korpus-potency) 100%);
-    
     /* Variables específicas del formulario */
     --korpus-success: #28a745;
     --korpus-danger: #dc3545;

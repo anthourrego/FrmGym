@@ -4,6 +4,20 @@
  * NO reemplaza estilos existentes, solo agrega funcionalidad
  */
 
+ 
+/* Variables KORPUS esenciales para el admin panel */
+:root {
+  --korpus-acero: #9CAFB7;
+  --korpus-potency: #121212;
+  --korpus-white: #FFFFFF;
+  --korpus-acero-light: rgba(156, 175, 183, 0.1);
+  --korpus-acero-dark: rgba(156, 175, 183, 0.8);
+  --korpus-shadow: rgba(18, 18, 18, 0.15);
+  --korpus-gradient: linear-gradient(135deg, var(--korpus-acero) 0%, var(--korpus-potency) 100%);
+  --korpus-border-radius: 16px;
+  --korpus-transition: all 0.3s ease;
+}
+
 /* ========================================
    UTILIDADES KORPUS ADICIONALES
 ======================================== */
