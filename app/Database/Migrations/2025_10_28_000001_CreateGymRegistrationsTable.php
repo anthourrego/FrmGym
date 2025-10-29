@@ -24,12 +24,7 @@ class CreateGymRegistrationsTable extends Migration
                 'type' => 'VARCHAR',
                 'constraint' => 12,
                 'null' => true,
-            ],
-            'document_hash' => [
-                'type' => 'VARCHAR',
-                'constraint' => 64,
-                'null' => true,
-                'comment' => 'SHA256 hash del documento para seguridad'
+                'comment' => 'Número de documento (opcional)'
             ],
             'age' => [
                 'type' => 'TINYINT',

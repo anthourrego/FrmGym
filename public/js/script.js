@@ -372,20 +372,60 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mostrar estado de carga
         setLoadingState(true);
         
-        // Simular envío del formulario (aquí conectarías con tu backend)
-        setTimeout(() => {
-            // Recopilar datos del formulario
-            const formData = collectFormData();
-            
-            // Procesar datos (aquí harías la llamada a tu API)
-            processFormData(formData);
-            
-            // Mostrar éxito
-            showSuccess();
-            
-            // Quitar estado de carga
+        // Recopilar datos del formulario
+        const formData = collectFormData();
+        
+        // Enviar datos al servidor
+        submitToServer(formData);
+    }
+
+    function submitToServer(formData) {
+        // Preparar datos para envío
+        const submitData = new FormData();
+        
+        // Agregar token CSRF
+        const csrfToken = document.querySelector('input[name="csrf_token_name"]');
+        if (csrfToken) {
+            submitData.append('csrf_token_name', csrfToken.value);
+        }
+        
+        // Agregar datos del formulario
+        Object.keys(formData).forEach(key => {
+            if (formData[key] !== null && formData[key] !== '') {
+                submitData.append(key, formData[key]);
+            }
+        });
+
+        // Realizar petición AJAX
+        fetch('/', {
+            method: 'POST',
+            body: submitData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showSuccess(data.message);
+                // Opcional: mostrar información adicional
+                console.log('Registro exitoso:', data.data);
+            } else {
+                showError(data.message || 'Error al procesar el registro');
+            }
+        })
+        .catch(error => {
+            console.error('Error en el envío:', error);
+            showError('Error de conexión. Por favor intenta nuevamente.');
+        })
+        .finally(() => {
             setLoadingState(false);
-        }, 1500);
+        });
     }
 
     function collectFormData() {
@@ -397,17 +437,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return {
             fullName: fields.fullName.value.trim(),
-            documentNumber: fields.documentNumber.value.trim(),
+            documentNumber: fields.documentNumber.value.trim() || null,
             age: parseInt(fields.age.value),
-            email: fields.email.value.trim(),
-            whatsapp: `+57 ${fields.whatsapp.value.trim()}`,
+            email: fields.email.value.trim().toLowerCase(),
+            whatsapp: fields.whatsapp.value.trim().replace(/\s/g, ''), // Solo números
             mainGoal: getRadioValue('mainGoal'),
-            otherGoal: fields.otherGoal ? fields.otherGoal.value.trim() : '',
+            otherGoal: fields.otherGoal ? fields.otherGoal.value.trim() : null,
             preferredSchedule: getRadioValue('preferredSchedule'),
             howDidYouKnow: getRadioValue('howDidYouKnow'),
-            otherSource: fields.otherSource ? fields.otherSource.value.trim() : '',
-            consent: getRadioValue('consent'),
-            timestamp: new Date().toISOString()
+            otherSource: fields.otherSource ? fields.otherSource.value.trim() : null,
+            consent: getRadioValue('consent')
         };
     }
 
@@ -440,19 +479,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showSuccess() {
-        // Animar la tarjeta
-        document.querySelector('.registration-card').classList.add('success-animation');
+    function showSuccess(message = '¡Registro exitoso! Te contactaremos pronto.') {
+        // Mostrar notificación de éxito
+        showNotification(message, 'success');
         
-        // Mostrar modal de éxito
-        successModal.show();
+        // Animar la tarjeta
+        const registrationCard = document.querySelector('.registration-card');
+        if (registrationCard) {
+            registrationCard.classList.add('success-animation');
+        }
+        
+        // Mostrar modal de éxito si existe
+        const successModal = document.getElementById('successModal');
+        if (successModal) {
+            const modal = new bootstrap.Modal(successModal);
+            modal.show();
+        }
         
         // Limpiar formulario después de un breve delay
         setTimeout(() => {
             handleReset();
-        }, 1000);
+        }, 2000);
+    }
 
-        // No hacer focus automático después del modal
+    function showError(message = 'Error al procesar el registro. Por favor intenta nuevamente.') {
+        // Mostrar notificación de error
+        showNotification(message, 'danger');
+        
+        // Remover clases de validación para permitir nuevo intento
+        form.classList.remove('was-validated');
+    }
+
+    function showNotification(message, type = 'info') {
+        // Crear o actualizar notificación
+        let notification = document.getElementById('notification');
+        
+        if (!notification) {
+            notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = 'alert alert-dismissible fade show position-fixed';
+            notification.style.cssText = `
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                max-width: 500px;
+            `;
+            document.body.appendChild(notification);
+        }
+        
+        // Configurar el tipo de alerta
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        
+        // Configurar el contenido
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Auto-cerrar después de 5 segundos
+        setTimeout(() => {
+            if (notification && notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
     }
 
     function handleReset() {

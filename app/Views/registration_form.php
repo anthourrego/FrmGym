@@ -34,7 +34,8 @@
                     <div class="card-body p-4">
                         <!-- <h2 class="text-center mb-4 form-title">Registro de Miembro</h2> -->
                         
-                        <form id="registrationForm" novalidate>
+                        <form id="registrationForm" action="/" method="POST" novalidate>
+                            <?= csrf_field() ?>
                             <!-- Sección 1: Datos Personales -->
                             <div class="form-section mb-4">
                                 <h4 class="section-title mb-3">

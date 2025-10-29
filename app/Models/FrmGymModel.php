@@ -4,7 +4,13 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class UserModel extends Model
+/**
+ * FrmGymModel - Modelo para gestión de registros del gimnasio KORPUS
+ * 
+ * Maneja toda la lógica de datos relacionada con el registro de miembros,
+ * incluyendo validaciones, estadísticas y operaciones CRUD.
+ */
+class FrmGymModel extends Model
 {
     protected $table = 'gym_registrations';
     protected $primaryKey = 'id';
@@ -25,6 +31,9 @@ class UserModel extends Model
         'how_did_you_know',
         'other_source',
         'consent',
+        'ip_address',
+        'user_agent',
+        'status',
         'created_at',
         'updated_at'
     ];
@@ -58,23 +67,8 @@ class UserModel extends Model
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert = ['hashSensitiveData'];
-    protected $beforeUpdate = ['hashSensitiveData'];
-
-    /**
-     * Encriptar datos sensibles antes de guardar
-     */
-    protected function hashSensitiveData(array $data)
-    {
-        // Solo hashear el documento si existe
-        if (isset($data['data']['document_number']) && !empty($data['data']['document_number'])) {
-            $data['data']['document_hash'] = hash('sha256', $data['data']['document_number']);
-            // Opcional: eliminar el documento original por seguridad
-            // unset($data['data']['document_number']);
-        }
-        
-        return $data;
-    }
+    protected $beforeInsert = [];
+    protected $beforeUpdate = [];
 
     /**
      * Obtener registros por objetivo

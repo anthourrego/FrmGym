@@ -8,7 +8,7 @@ korpus-gym/
 │   ├── Controllers/
 │   │   └── Home.php                 # Controlador principal del formulario
 │   ├── Models/
-│   │   └── UserModel.php           # Modelo para gestión de usuarios
+│   │   └── FrmGymModel.php         # Modelo para gestión de registros
 │   ├── Views/
 │   │   └── registration_form.php   # Vista del formulario de registro
 │   ├── Config/
@@ -141,13 +141,13 @@ location / {
 - `otherGoal`: Requerido si `mainGoal` es "otro"
 - `otherSource`: Requerido si `howDidYouKnow` es "otro"
 
-#### 3. Modelo de Datos (`app/Models/UserModel.php`)
+#### 3. Modelo de Datos (`app/Models/FrmGymModel.php`)
 
 **Características**:
 - Validación de datos a nivel de modelo
-- Encriptación automática de documentos sensibles
 - Métodos para análisis estadístico
 - Timestamps automáticos
+- **Sin encriptación de documentos** (almacenamiento directo para facilidad de uso)
 
 **Métodos Estadísticos**:
 ```php
@@ -164,8 +164,7 @@ getTotalRegistrations()       // Total de registros
 **Tabla: `gym_registrations`**
 - `id`: Clave primaria auto-incremental
 - `full_name`: Nombre completo (VARCHAR 50)
-- `document_number`: Número de documento (VARCHAR 12, opcional)
-- `document_hash`: Hash SHA256 del documento para seguridad
+- `document_number`: Número de documento (VARCHAR 12, opcional, **sin encriptar**)
 - `age`: Edad (TINYINT, 15-100)
 - `email`: Email único (VARCHAR 100)
 - `whatsapp`: Número de WhatsApp (VARCHAR 20)
@@ -218,7 +217,7 @@ GET  /health        # Health check
    - Sanitización automática de inputs
 
 2. **Protección de Datos**:
-   - Hash SHA256 para números de documento
+   - **Documentos sin encriptar** para facilidad de gestión
    - Validación de email único
    - Registro de IP y User Agent para auditoría
 
