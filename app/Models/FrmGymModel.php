@@ -146,4 +146,37 @@ class FrmGymModel extends Model
     {
         return $this->where('email', $email)->countAllResults() > 0;
     }
+
+    /**
+     * Obtener usuarios que han dado consentimiento para marketing
+     */
+    public function getUsersWithConsent(): array
+    {
+        return $this->where('consent', 'si')->findAll();
+    }
+
+    /**
+     * Obtener usuarios que NO han dado consentimiento para marketing
+     */
+    public function getUsersWithoutConsent(): array
+    {
+        return $this->where('consent', 'no')->findAll();
+    }
+
+    /**
+     * Obtener estadísticas de consentimiento
+     */
+    public function getConsentStats(): array
+    {
+        $total = $this->countAll();
+        $withConsent = $this->where('consent', 'si')->countAllResults();
+        $withoutConsent = $this->where('consent', 'no')->countAllResults();
+
+        return [
+            'total_registrations' => $total,
+            'with_consent' => $withConsent,
+            'without_consent' => $withoutConsent,
+            'consent_percentage' => $total > 0 ? round(($withConsent / $total) * 100, 2) : 0
+        ];
+    }
 }

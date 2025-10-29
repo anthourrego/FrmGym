@@ -322,14 +322,23 @@
                             <div class="form-section mb-4">
                                 <h4 class="section-title mb-3">
                                     <i class="fas fa-handshake me-2"></i>
-                                    5. Consentimiento
+                                    5. Consentimiento para Comunicaciones
                                 </h4>
                                 
                                 <div class="consent-box p-3 mb-3">
                                     <p class="mb-3 text-muted">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        Acepto ser contactado por WhatsApp y correo electrónico para recibir información sobre planes, promociones y eventos de KORPUS Training Club.
+                                        <strong>¿Autorizas que KORPUS Training Club te contacte?</strong><br>
+                                        Esto nos permitirá enviarte información sobre planes, promociones, horarios de clases y eventos especiales a través de WhatsApp y correo electrónico.
                                     </p>
+                                    
+                                    <div class="alert alert-info py-2 px-3 mb-3">
+                                        <small>
+                                            <i class="fas fa-shield-alt me-1"></i>
+                                            <strong>Tu privacidad es importante:</strong> Puedes cambiar esta preferencia en cualquier momento contactándonos. 
+                                            Tu registro se completará independientemente de tu elección.
+                                        </small>
+                                    </div>
                                     
                                     <div class="row">
                                         <div class="col-12">
@@ -341,9 +350,12 @@
                                                        value="si"
                                                        required>
                                                 <label class="form-check-label fw-bold text-success" for="consentYes">
-                                                    <i class="fas fa-check me-1"></i>
-                                                    Sí, acepto
+                                                    <i class="fas fa-check-circle me-2"></i>
+                                                    <strong>Sí, autorizo</strong> que me contacten
                                                 </label>
+                                                <div class="text-muted ms-4 mt-1">
+                                                    <small>Recibirás información sobre planes, promociones y eventos</small>
+                                                </div>
                                             </div>
                                             <div class="form-check mb-3">
                                                 <input class="form-check-input" 
@@ -351,10 +363,13 @@
                                                        name="consent" 
                                                        id="consentNo" 
                                                        value="no">
-                                                <label class="form-check-label fw-bold text-warning" for="consentNo">
-                                                    <i class="fas fa-times me-1"></i>
-                                                    No, gracias
+                                                <label class="form-check-label fw-bold text-primary" for="consentNo">
+                                                    <i class="fas fa-times-circle me-2"></i>
+                                                    <strong>No, prefiero</strong> que no me contacten
                                                 </label>
+                                                <div class="text-muted ms-4 mt-1">
+                                                    <small>Solo recibirás comunicaciones esenciales sobre tu membresía</small>
+                                                </div>
                                             </div>
                                             <div class="invalid-feedback">
                                                 Por favor, selecciona una opción de consentimiento.

@@ -305,6 +305,37 @@ body::before {
     border-radius: 10px 0 0 10px;
 }
 
+/* Estilos específicos para opciones de consentimiento */
+.consent-box .form-check-label {
+    padding: 0.5rem 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.consent-box .form-check-label:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
+}
+
+.consent-box .form-check-input:checked + .form-check-label {
+    background-color: rgba(255, 255, 255, 0.5);
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
+    border-radius: 8px;
+}
+
+/* Alert info para consentimiento */
+.alert-info {
+    background-color: rgba(13, 202, 240, 0.1);
+    border-color: rgba(13, 202, 240, 0.2);
+    color: #055160;
+}
+
+.alert-info .fas {
+    color: #0dcaf0;
+}
+
 /* Campos condicionales */
 .conditional-field {
     margin-left: 2rem;

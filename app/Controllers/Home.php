@@ -101,10 +101,10 @@ class Home extends BaseController
                 ]
             ],
             'consent' => [
-                'rules' => 'required|in_list[si]',
+                'rules' => 'required|in_list[si,no]',
                 'errors' => [
-                    'required' => 'Debes aceptar el consentimiento para continuar',
-                    'in_list' => 'Debes aceptar el consentimiento para continuar'
+                    'required' => 'Debes seleccionar una opción de consentimiento',
+                    'in_list' => 'Por favor selecciona si aceptas o no el consentimiento'
                 ]
             ]
         ];
@@ -159,14 +159,20 @@ class Home extends BaseController
             $insertId = $this->frmGymModel->insert($data);
 
             if ($insertId) {
+                // Personalizar mensaje según el consentimiento
+                $consentMessage = $data['consent'] === 'si' 
+                    ? '¡Registro exitoso! Te contactaremos pronto para coordinar tu primera sesión en KORPUS Training Club.'
+                    : '¡Registro exitoso! Respetaremos tu preferencia de no recibir comunicaciones promocionales. Solo te contactaremos para asuntos esenciales de tu membresía.';
+                
                 // Registro exitoso
                 $response = [
                     'success' => true,
-                    'message' => '¡Registro exitoso! Te contactaremos pronto para coordinar tu primera sesión en KORPUS Training Club.',
+                    'message' => $consentMessage,
                     'data' => [
                         'id' => $insertId,
                         'name' => $data['full_name'],
-                        'email' => $data['email']
+                        'email' => $data['email'],
+                        'consent_given' => $data['consent'] === 'si'
                     ]
                 ];
 
