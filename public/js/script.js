@@ -32,13 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     behavior: 'smooth', 
                     block: 'center' 
                 });
-                
-                // Mostrar una notificación sutil
-                showNotification(
-                    'success', 
-                    '¡Registro completado! Puedes comenzar un nuevo registro.',
-                    3000
-                );
             }
         }, 500);
     }
